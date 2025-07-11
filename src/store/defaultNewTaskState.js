@@ -50,10 +50,6 @@ export default {
                     "active": true,
                     "limit": -1
                 },
-                "karel_if": {
-                    "active": false,
-                    "limit": -1
-                },
                 "karel_ifelse": {
                     "active": false,
                     "limit": -1

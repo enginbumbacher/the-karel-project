@@ -37,7 +37,7 @@
       <div class="speed-labels-row">
         <span>(slow)</span>
         <span>(fast)</span>
-      </div>    
+      </div>
     </div>
 
   </div>
@@ -47,7 +47,7 @@
   import KarelBlocklyWorld from "./KarelBlocklyWorld"
   import { asyncRun } from './KarelBlocklyWorld/PythonWorker/workerInterface'
   export default {
-    props: [ 'playing', 'stepSpeed', 'preWorld', 'workspace', 'worldWorkspace', 'toolbox', 'isPython', 'pythonCode', 'worldPython', 'errorCallback', 'highlight', 'settings', 'agentWorkspaces', 'agentPythonCodes' ],
+    props: [ 'playing', 'stepSpeed', 'preWorld', 'workspace', 'worldWorkspace', 'toolbox', 'isPython', 'pythonCode', 'worldPython', 'errorCallback', 'highlight', 'settings', 'agentWorkspaces', 'agentPythonCodes', 'directions' ],
     data() {
       return {
         karelBlocklyWorld: null,
@@ -128,7 +128,7 @@
                     return;
                   }
 
-                  this.karelBlocklyWorld = KarelBlocklyWorld(preWorld, { toolbox, workspace, worldWorkspace, isPython, pythonCode: totalCode, pythonEndConditions, highlight: this.highlight })
+                  this.karelBlocklyWorld = KarelBlocklyWorld(preWorld, { toolbox, workspace, worldWorkspace, isPython, pythonCode: totalCode, pythonEndConditions, highlight: this.highlight, directions: this.directions })
                   this.step(this.stopOnFirstStep)
                   this.stopOnFirstStep = false
                 } catch (e) {
@@ -137,7 +137,7 @@
               }
               translatePython()
             } else {
-              this.karelBlocklyWorld = KarelBlocklyWorld(preWorld, { toolbox, workspace, worldWorkspace, isPython, pythonCode, agentWorkspaces})
+              this.karelBlocklyWorld = KarelBlocklyWorld(preWorld, { toolbox, workspace, worldWorkspace, isPython, pythonCode, agentWorkspaces, directions: this.directions})
               this.step(this.stopOnFirstStep)
               this.stopOnFirstStep = false
             }

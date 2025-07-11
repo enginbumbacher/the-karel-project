@@ -18,6 +18,7 @@
       <div style="display: flex; gap: 32px;">
         <!-- Backpack -->
         <div style="display: flex;">
+          <img src="../../assets/karelBackpack.png" alt="Karel with a backpack" height="64px" />
           <div style="width: 64px" >
             <StoneAndNumber :n="world.pickedStones?.blue ?? 0" obj="-1" numPosition="middle" color="blue" />
           </div>
@@ -34,7 +35,14 @@
           :active="!playing"
           @room-change="activeRoom = $event"
         />
+
+        <!-- Arrows (input for tablet) -->
+        <KarelArrows
+          v-if="karelBlockly.settings.blocks.karel_events.active"
+          v-model="directions"
+        />
       </div>
+
 
       <!-- Scenario Selector, if More Than One -->
       <div v-if="task.worlds.length > 1" class="scenario-selector">
@@ -77,6 +85,7 @@
           :settings="karelBlockly.settings"
           :agentWorkspaces="agentWorkspaces"
           :agentPythonCodes="agentPythonCodes"
+          :directions="directions"
           @play="playing = true"
           @pause="playing = false"
           @step="currentStepData = $event; if (currentStepData) { activeRoom = currentStepData.world.karelRoom } else { pythonHighlights = {} }"
@@ -97,7 +106,7 @@
         v-model:settings="karelBlockly.settings"
         v-model:highlight="karelBlockly.highlight"
         v-model:activeEditorTab="activeEditorTab"
-        :agents="agentTabs"
+        v-model:agents="agentTabs"
         :runningTab="currentStepData?.currentId"
       />
       <div v-else style="display: flex; flex-direction: column; width: 100%; height: 100%">
@@ -119,7 +128,7 @@
           :error="pythonError"
           :world="worldPython"
           :hasWorld="karelBlockly.settings.blocks.karel_events.active"
-          :agents="agentTabs"
+          v-model:agents="agentTabs"
           :activeTab="0"
           :readonly="true"
           :runningTab="currentStepData?.currentId"
@@ -145,12 +154,13 @@ import {
 } from '../../helpers/projectSwallows.js'
 import StoneAndNumber from '../BuilderComponents/TaskCustomizer/KarelWorldRendererAndEditor/StoneAndNumberVueSvg.vue'
 import KarelWorldMap from '../KarelWorldMap.vue'
+import KarelArrows from '../KarelArrows.vue'
 
 const copy = x => JSON.parse(JSON.stringify(x))
 
 export default {
   name: 'task-player',
-  components: { KarelBlockly, KarelPython, KarelWorldRenderer, KarelBlocklyPlayerAndControls, StoneAndNumber, KarelWorldMap },
+  components: { KarelBlockly, KarelPython, KarelWorldRenderer, KarelBlocklyPlayerAndControls, StoneAndNumber, KarelWorldMap, KarelArrows },
   props: {
     id: {
       type: String,
@@ -164,15 +174,10 @@ export default {
     }
     const { karelBlockly, agents } = task
     karelBlockly.settings.customizerMode = false
-    
-    const agentWorkspaces = {}
-    const agentPythonCodes = {}
+
     const agentTabs = []
     if (agents) {
       for (const agent of agents) {
-        agentWorkspaces[agent.id] = agent.workspace
-        agentPythonCodes[agent.id] = agent.pythonCode
-
         if (agent.showTab) {
           agentTabs.push(agent)
         }
@@ -193,10 +198,10 @@ export default {
       pythonHighlights: {},
       activeRoom: { row: 0, col: 0 },
       showLimits: false,
-      agentWorkspaces,
-      agentPythonCodes,
+      agents,
       agentTabs,
-      activeEditorTab: 0
+      activeEditorTab: 0,
+      directions: [false, false, false, false]
     }
   },
   watch: {
@@ -233,6 +238,7 @@ export default {
     activeScenarioIndex() {
       this.playing = false
       this.currentStepData = null
+      this.activeRoom = { row: 0, col: 0 }
     },
     correctScenarios: {
       deep: true,
@@ -248,7 +254,14 @@ export default {
       }
     },
     playing() {
-      if (this.playing) this.pythonError.line = 0
+      if (this.playing) {
+        this.pythonError.line = 0
+      }
+
+      this.directions[0] = false
+      this.directions[1] = false
+      this.directions[2] = false
+      this.directions[3] = false
     }
   },
   computed: {
@@ -294,6 +307,28 @@ export default {
         return { name: nameMap[key] || key, limit: value.limit === -1 ? '∞' : value.limit }
       })
       return final;
+    },
+    agentWorkspaces() {
+      const workspaces = {}
+
+      if (this.agents) {
+        for (const agent of this.agents) {
+          workspaces[agent.id] = agent.workspace
+        }
+      }
+
+      return workspaces;
+    },
+    agentPythonCodes() {
+      const codes = {}
+
+      if (this.agents) {
+        for (const agent of this.agents) {
+          codes[agent.id] = agent.pythonCode
+        }
+      }
+
+      return codes
     }
   },
   methods: {

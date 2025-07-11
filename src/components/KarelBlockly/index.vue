@@ -54,7 +54,6 @@ const generateToolbox = ({
   karel_turn=true,
   karel_place=true,
   karel_pickup=true,
-  karel_if=false,
   karel_ifelse=false,
   karel_variable=false,
   karel_repeat=false,
@@ -70,14 +69,15 @@ const generateToolbox = ({
     ${ karel_turn ? `<Block type="karel_turn_left" id="karel_turn" />` : '' }
     ${ karel_place ? `<Block type="karel_place_stone" id="karel_place" />` : '' }
     ${ karel_pickup ? `<Block type="karel_pickup_stone" id="karel_pickup" />` : '' }
-    ${ karel_if ? `<Block type="karel_if_dropdown" id="karel_if" />` : '' }
     ${ karel_ifelse ? `
-        <Block type="karel_ifelse" id="karel_ifelse" />
         <Block type="controls_if" id="karel_nativeifelse" />
+        <Block type="karel_stone_present" id="karel_stone_present" />
+        <Block type="karel_no_obstacle" id="karel_no_obstacle" />
         ` : '' }
   ${
     // From https://github.com/google/blockly/tree/master/blocks
     karel_variable ? `
+    <Button text="Create variable" id="karel_create_variable" callbackKey="karelCreateVariable" />
     <Block type="variables_get" id="karel_variableget" />
     <Block type="variables_set" id="karel_variableset" />
     <Block type="logic_compare" id="karel_compare" />
@@ -98,7 +98,6 @@ const generateToolbox = ({
         ` : ''
     }
     ${ karel_while ?`
-    <Block type="karel_while_dropdown" id="karel_while" />
     <Block type="controls_whileUntil" id="karel_nativewhile" />
     ` : '' }
     ${ karel_define ? `
@@ -118,6 +117,7 @@ const generateToolbox = ({
     ` : '' }
     ${ karel_agents ? `
     <Block type="karel_bounce" id="karel_bounce" />
+    <Block type="karel_agent_collision" id="karel_agent_collision" />
     ` : '' }
   </xml>
 `
@@ -127,7 +127,6 @@ const settingNameToTypeName = {
   karel_turn: 'karel_turn_left',
   karel_place: 'karel_place_stone',
   karel_pickup: 'karel_pickup_stone',
-  karel_if: 'karel_if_dropdown',
   karel_ifelse: 'karel_ifelse',
   karel_variable: 'karel_variable',
   karel_repeat: 'controls_repeat_ext',
@@ -272,7 +271,8 @@ export default {
           tabs[agent.id] = {
             id: agent.id,
             name: agent.name,
-            workspace: agent.workspace
+            workspace: agent.workspace,
+            allowEdit: agent.allowEdit
           };
         }
       }
@@ -301,7 +301,8 @@ export default {
           scaleSpeed: 1.2,
           pinch: false
         },
-        readOnly: !this.settings.customizerMode && this.activeTab !== 0
+        readOnly: !this.settings.customizerMode && this.activeTab !== 0 && !this.finalTabs[this.activeTab].allowEdit,
+        comments: true
       })
       // Set Initial Workspace
       Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(this.finalTabs[this.activeTab].workspace), this.$options.workspaces[this.activeTab].instance)
@@ -321,6 +322,10 @@ export default {
         if (connectionInLockedProcedure(a) || connectionInLockedProcedure(b)) return false
         else return originalCanConnect.apply(this, arguments)
       }
+
+      this.$options.workspaces[this.activeTab].instance.registerButtonCallback('karelCreateVariable', (button) => {
+        Blockly.Variables.createVariableButtonHandler(button.getTargetWorkspace(), null, 'int')
+      });
     },
     blocklyChangeListeners(e) {
       this.makeBlocksUndeletableIfToolboxHidden(e)
@@ -334,7 +339,11 @@ export default {
       const registryContent = Object.values(registryValues)[0]
       Object
         .values(registryContent)
-        .forEach(item => registry.unregister(item.id))
+        .forEach((item) => {
+          if (item.id !== 'blockComment') {
+            registry.unregister(item.id)
+          }
+        })
     },
     updateWorkspace() {
       const newWorkspace = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(this.$options.workspaces[this.activeTab].instance))

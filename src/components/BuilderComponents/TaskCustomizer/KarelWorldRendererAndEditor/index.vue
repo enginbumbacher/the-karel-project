@@ -214,7 +214,7 @@
 
     <!-- STONES -->
     <SvgPositioner v-for="stone in finalStones"
-      :key="`stones-${stone.r}-${stone.c}-${stone.color}`"
+      :key="`stones-${stone.color}-${stone.room.row}-${stone.room.col}-${stone.r}-${stone.c}`"
       anchor="center center"
       :xPos="5 + 10*stone.c + (stone.multi ? (stone.color === 'red' ? 2.5 : -2.5) : 0)"
       :yPos="5 + 10*stone.r - (stone.multi ? 2.5 : 0)"
@@ -528,11 +528,11 @@ export default {
     objective: {
       deep: true,
       handler(val) {
-        const { karelRow, karelCol, karelDir, stones } = val
+        const { karelRow, karelCol, karelDir, karelRoom, stones } = val
         this.objKarelRow = karelRow
         this.objKarelCol = karelCol
         this.objKarelDir = karelDir
-        this.objKarelRoom = val.objKarelRoom ?? {row: 0, col: 0}
+        this.objKarelRoom = karelRoom ?? {row: 0, col: 0}
         this.objStones = stones.map(stone => ({ ...stone, color: stone.color ? stone.color : "blue" }))
         for (const stone of this.objStones) {
           if (!stone.room) stone.room = {row: 0, col: 0};
@@ -553,6 +553,13 @@ export default {
         nCols, nRows, karelRow, karelCol, karelDir, karelRoom, walls, doors, rooms, stones,
         objKarelRow, objKarelCol, objKarelDir, objKarelRoom, objStones, agents
       } = this
+
+      for (const agentId in this.agents) {
+        if (!this.agents[agentId]) {
+          delete this.agents[agentId];
+        }
+      }
+
       this.$emit('change', {
         nCols, nRows, karelRow, karelCol, karelDir, karelRoom, walls, doors, rooms, stones,
         objKarelRow, objKarelCol, objKarelDir, objKarelRoom, objStones, agents
@@ -877,7 +884,7 @@ export default {
         const final = {};
         for (const agentId in this.agents) {
           const agent = this.agents[agentId];
-          if (agent.room.row === this.activeRoom.row && agent.room.col === this.activeRoom.col) {
+          if (agent && agent.room.row === this.activeRoom.row && agent.room.col === this.activeRoom.col) {
             final[agentId] = agent
           }
         }

@@ -30,7 +30,7 @@
         <!-- STONES -->
         <g
             v-for="stone in finalStones"
-            :key="`stones-${stone.r}-${stone.c}`"
+            :key="`stones-${stone.color}-${stone.room.row}-${stone.room.col}-${stone.r}-${stone.c}`"
             :style="`
                 transform: translate(${
                     100*(stone.c + (stone.multi ? (stone.color === 'blue' ? -0.1 : 0.35) : 0))/world.nCols
@@ -337,7 +337,7 @@ export default {
       }
       for (const agentId in this.world.agents) {
         const agent = this.world.agents[agentId];
-        if (agent.room.row === this.activeRoom.row && agent.room.col === this.activeRoom.col) {
+        if (agent && agent.room.row === this.activeRoom.row && agent.room.col === this.activeRoom.col) {
           final[agentId] = agent
         }
       }

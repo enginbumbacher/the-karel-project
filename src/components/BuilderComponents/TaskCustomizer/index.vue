@@ -163,6 +163,8 @@
               }" />
               <input type="checkbox" :id="`agent${agent.id}-show`" v-model="agent.showTab" />
               <label :for="`agent${agent.id}-show`">Show tab</label>
+              <input type="checkbox" :id="`agent${agent.id}-edit`" v-model="agent.allowEdit" />
+              <label :for="`agent${agent.id}-edit`">Allow edit</label>
               <button @click="removeAgent(agent.id)">Remove</button>
               <br>
             </div>
@@ -302,8 +304,9 @@ export default {
         nCols, nRows, karelRow, karelCol, karelDir, karelRoom, walls, doors, rooms, stones,
         objKarelRow, objKarelCol, objKarelDir, objKarelRoom, objStones, agents
       } = world;
+      const pickedStones = this.activeWorld.preWorld.pickedStones;
       this.activeWorld.preWorld = {
-        nCols, nRows, karelRow, karelCol, karelDir, karelRoom, walls, doors, rooms, stones, agents
+        nCols, nRows, karelRow, karelCol, karelDir, karelRoom, walls, doors, rooms, stones, agents, pickedStones
       };
       this.activeWorld.postWorld = {
         nCols, nRows, karelRow: objKarelRow, karelCol: objKarelCol, karelDir: objKarelDir, karelRoom: objKarelRoom, walls, doors, rooms, stones: objStones
@@ -321,15 +324,15 @@ export default {
       if (!settings) return []
       let systemTags = []
       // destrusture all blocks from settings.blocks
-      const { karel_move, karel_turn, karel_place, karel_pickup, karel_repeat, karel_if, karel_ifelse, karel_variable, karel_while, karel_define, karel_events, karel_agents } = settings.blocks
+      const { karel_move, karel_turn, karel_place, karel_pickup, karel_repeat, karel_ifelse, karel_variable, karel_while, karel_define, karel_events, karel_agents } = settings.blocks
       if (karel_repeat?.active) systemTags.push("Has 'Repeat'")
-      if (karel_if?.active || karel_ifelse.active) systemTags.push("Has 'If'")
+      if (karel_ifelse.active) systemTags.push("Has 'If'")
       if (karel_while?.active) systemTags.push("Has 'While'")
       if (karel_variable?.active) systemTags.push("Has Variable")
       if (karel_define?.active) systemTags.push("Has Function")
       if (karel_events?.active) systemTags.push("Has Events")
       if ( karel_move?.active && karel_turn?.active && karel_place?.active  && karel_pickup?.active &&
-        !karel_repeat?.active && !karel_if?.active && !karel_ifelse?.active && !karel_while?.active && !karel_define?.active ) {
+        !karel_repeat?.active && !karel_ifelse?.active && !karel_while?.active && !karel_define?.active ) {
         systemTags.push("Basic Toolbox")
       }
       if (karel_agents?.active) systemTags.push("Has Agents")

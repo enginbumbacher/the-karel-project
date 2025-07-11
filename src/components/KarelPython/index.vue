@@ -190,7 +190,7 @@ watch(() => activeTab.value, (newActiveTab, previousActiveTab) => {
 
   instance.setModel(models[newActiveTab]);
 
-  instance.updateOptions({ readOnly: props.readonly && newActiveTab !== 0 });
+  instance.updateOptions({ readOnly: props.readonly && newActiveTab !== 0 && !agents.value.filter((agent) => agent.id === newActiveTab)[0].allowEdit });
 
   if (states[newActiveTab]) {
     instance.restoreViewState(states[newActiveTab]);

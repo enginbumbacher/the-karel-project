@@ -208,6 +208,19 @@ export default function initializeKarelBlocklyBlocks(Blockly) {
         }
     }
 
+    var karelAgentCollision = {
+        "type": "karel_agent_collision",
+        "message0": "%{BKY_KAREL_AGENT_COLLISION}",
+        "output": "Boolean",
+        "colour": 45
+    }
+
+    Blockly.Blocks['karel_agent_collision'] = {
+        init: function () {
+            this.jsonInit(karelAgentCollision);
+        }
+    }
+
     var karelMove = {
         "type": "karel_move",
         "message0": "%{BKY_KAREL_MOVE_FORWARD}",
@@ -356,6 +369,48 @@ export default function initializeKarelBlocklyBlocks(Blockly) {
     Blockly.Blocks['karel_pickup_stone'] = {
         init: function () {
             this.jsonInit(karelPickupStone);
+        }
+    };
+
+    var karelStonePresent = {
+        "type": "karel_stone_present",
+        "message0": "%{BKY_KAREL_STONE_PRESENT} %1",
+        "args0": [
+            {
+                "type": "field_dropdown",
+                "name": "COLOR",
+                "options": [
+                    [
+                        "%{BKY_KAREL_STONE_BLUE}",
+                        "blue"
+                    ],
+                    [
+                        "%{BKY_KAREL_STONE_RED}",
+                        "red"
+                    ]
+                ]
+            }
+        ],
+        "output": "Boolean",
+        "colour": 45
+    }
+
+    Blockly.Blocks['karel_stone_present'] = {
+        init: function () {
+            this.jsonInit(karelStonePresent);
+        }
+    };
+
+    var karelNoObstacle = {
+        "type": "karel_no_obstacle",
+        "message0": "%{BKY_KAREL_NO_OBSTACLE}",
+        "output": "Boolean",
+        "colour": 45
+    }
+
+    Blockly.Blocks['karel_no_obstacle'] = {
+        init: function () {
+            this.jsonInit(karelNoObstacle);
         }
     };
 

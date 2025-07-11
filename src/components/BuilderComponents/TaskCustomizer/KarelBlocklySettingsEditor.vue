@@ -75,7 +75,6 @@ export default {
         karel_turn: 'Turn Left',
         karel_place: 'Place Stone',
         karel_pickup: 'Pickup Stone',
-        karel_if: "'If' Block",
         karel_ifelse: "'If-Else' block",
         karel_variable: "Variable blocks",
         karel_repeat: "'Repeat' Block",

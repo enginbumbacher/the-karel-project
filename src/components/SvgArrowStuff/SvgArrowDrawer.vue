@@ -1,7 +1,8 @@
 <template>
   <g
-    @__drag="drag"
-    @__drop="drop"
+    @mousedown="dragstart"
+    @mousemove="drag"
+    @mouseup="drop"
   >
     <rect
       :x="x"
@@ -33,23 +34,31 @@ export default {
   },
   data() {
     return {
+      active: false,
       from: null,
       to: null
     }
   },
   methods: {
+    dragstart() {
+      this.active = true
+    },
     drag(event) {
-      const {x, y} = event.svg
-      if (this.from === null) {
-        this.from = {x,y}
-        this.$emit('start', {x,y})
-      }
-      else {
-        this.to = {x,y}
-        this.$emit('move', {x,y})
+      if (this.active) {
+        const x = event.offsetX
+        const y = event.offsetY
+        if (this.from === null) {
+          this.from = {x,y}
+          this.$emit('start', {x,y})
+        }
+        else {
+          this.to = {x,y}
+          this.$emit('move', {x,y})
+        }
       }
     },
     drop() {
+      this.active = false
       this.from = null
       this.to = null
       this.$emit('end')

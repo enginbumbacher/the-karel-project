@@ -62,3 +62,7 @@ def worldStoneCount(color):
 
 def onKeyPress(key, callback):
     pass
+
+
+def stonesPresent(color):
+    pass
