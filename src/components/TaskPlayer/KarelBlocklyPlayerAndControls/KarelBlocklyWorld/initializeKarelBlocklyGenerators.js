@@ -73,6 +73,10 @@ export default function initializeKarelBlocklyGenerators(Blockly) {
         return 'karel.spawnStone("' + color + '", ' + row + ', ' + col + ');\n';
     };
 
+    Blockly.JavaScript['karel_agent_collision'] = function(block) {
+      return ['karel.checkCollision()', Blockly.JavaScript.ORDER_NONE]
+    }
+
     Blockly.JavaScript['karel_move'] = function () {
         return 'karel.move();\n'
     };
@@ -154,6 +158,15 @@ export default function initializeKarelBlocklyGenerators(Blockly) {
         var color = block.getFieldValue('COLOR');
         return 'karel.pickStone("' + color + '");\n'
     };
+
+    Blockly.JavaScript['karel_stone_present'] = function(block) {
+      var color = block.getFieldValue('COLOR');
+      return ['karel.stonesPresent("' + color + '")', Blockly.JavaScript.ORDER_NONE];
+    }
+
+    Blockly.JavaScript['karel_no_obstacle'] = function(block) {
+      return ['karel.noObstacle()', Blockly.JavaScript.ORDER_NONE];
+    }
 
     Blockly.JavaScript['karel_if_dropdown'] = function (block) {
         var dropdown_condition = CONDITIONS_TO_KAREL_JS[block.getFieldValue('CONDITION')];

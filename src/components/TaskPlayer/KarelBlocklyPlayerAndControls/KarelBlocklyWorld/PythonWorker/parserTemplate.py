@@ -525,6 +525,8 @@ try:
 
         context['code'] += 'async function world_main() {\ntry {\nwhile (true) {'
         parse_rec(tree, context, 1)
+        if context['code'].find('await step(') < 0:
+            context['code'] += 'await step();'
         context['code'] += '}\n} catch (e) { karel.error = e.message; }\n}\nworld_main();\n'
 
         if 'world_main' not in context['functions']:
@@ -535,6 +537,8 @@ try:
     else:
         context['code'] += f'async function agent_{currentId}_main() {{\n{f'await step({currentId});\n' if hasWorld or currentId > minAgentId else ''}try{{\nwhile (true) {{\n'
         parse_rec(tree, context, 1)
+        if context['code'].find('await step(') < 0:
+            context['code'] += 'await step();'
         context['code'] += f'}}\n}} catch (e) {{ karel.error = e.message; }}\n}}\nagent_{currentId}_main();\n'
 
     results['type'] = 'success'

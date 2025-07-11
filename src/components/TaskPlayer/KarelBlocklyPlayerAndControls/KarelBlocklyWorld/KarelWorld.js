@@ -9,16 +9,6 @@ function Karel(context) {
     }
     this.world = world
 
-    this.leftArrowPressed = false
-    this.rightArrowPressed = false
-    this.upArrowPressed = false
-    this.downArrowPressed = false
-    
-    this.leftNextStep = false
-    this.rightNextStep = false
-    this.upNextStep = false
-    this.downNextStep = false
-
     this.variables = {}
     this.eventFunctions = {}
 
@@ -27,49 +17,6 @@ function Karel(context) {
 
     if (!world.karelRoom) {
       world.karelRoom = { row: 0, col: 0 };
-    }
-
-    window.addEventListener('keydown', (e) => {
-        // e.preventDefault()
-
-        if (e.key === 'ArrowLeft') {
-            if (!this.leftArrowPressed) this.leftNextStep = true
-            this.leftArrowPressed = true
-        }
-        if (e.key === 'ArrowRight') {
-            if (!this.rightArrowPressed) this.rightNextStep = true
-            this.rightArrowPressed = true
-        }
-        if (e.key === 'ArrowUp') {
-            if (!this.upArrowPressed) this.upNextStep = true
-            this.upArrowPressed = true
-        }
-        if (e.key === 'ArrowDown') {
-            if (!this.downArrowPressed) this.downNextStep = true
-            this.downArrowPressed = true
-        }
-    })
-
-    window.addEventListener('keyup', (e) => {
-        if (e.key === 'ArrowLeft') this.leftArrowPressed = false
-        if (e.key === 'ArrowRight') this.rightArrowPressed = false
-        if (e.key === 'ArrowUp') this.upArrowPressed = false
-        if (e.key === 'ArrowDown') this.downArrowPressed = false
-    })
-
-    this.isKeyPressed = (key) => {
-        switch (key) {
-            case 'ArrowLeft':
-                return this.leftArrowPressed
-            case 'ArrowRight':
-                return this.rightArrowPressed
-            case 'ArrowUp':
-                return this.upArrowPressed
-            case 'ArrowDown':
-                return this.downArrowPressed
-            default:
-                return false
-        }
     }
 
     const nextDir = {
@@ -89,7 +36,16 @@ function Karel(context) {
         }
         return w.r === eq.r && w.c === eq.c && w.d === eq.d
     })
-    const stonesUnderKarel = (color) => stonesAtLocation(world.karelRow, world.karelCol, color, world.karelRoom)
+    const stonesUnderAgent = (color) => {
+      if (context.currentId === 0) {
+        return stonesAtLocation(world.karelRow, world.karelCol, color, world.karelRoom)
+      } else if (context.currentId > 0) {
+        const id = context.currentId
+        return stonesAtLocation(world.agents[id].row, world.agents[id].col, color, world.agents[id].room)
+      } else {
+        this.error = 'Checked stones not under agent!'
+      }
+    }
 
     this.move = () => {
         if (context.currentId === 0) {
@@ -189,7 +145,7 @@ function Karel(context) {
         if (!this.stonesPresent(color)) this.error = 'No ' + color + ' stones to pick!'
         else {
             world.pickedStones[color] += 1
-            stonesUnderKarel(color).n -= 1
+            stonesUnderAgent(color).n -= 1
             // don't allow stones when n < 1
             world.stones = world.stones.filter(s => s.n > 0)
         }
@@ -199,7 +155,7 @@ function Karel(context) {
         if (world.pickedStones[color] === 0) this.error = 'Karel has no ' + color + ' stones to place!'
         else {
             world.pickedStones[color] -= 1
-            const stones = stonesUnderKarel(color)
+            const stones = stonesUnderAgent(color)
             if (!stones) world.stones.push({ r: world.karelRow, c: world.karelCol, n: 1, color, room: {...world.karelRoom} })
             else stones.n += 1
         }
@@ -220,6 +176,19 @@ function Karel(context) {
     }
 
     this.frontIsClear = (r, c, d, room) => {
+        if (!r) {
+          r = context.currentId > 0 ? world.agents[context.currentId].row : world.karelRow
+        }
+        if (!c) {
+          c = context.currentId > 0 ? world.agents[context.currentId].col : world.karelCol
+        }
+        if (!d) {
+          d = context.currentId > 0 ? world.agents[context.currentId].dir : world.karelDir
+        }
+        if (!room) {
+          room = context.currentId > 0 ? world.agents[context.currentId].room : world.karelRoom
+        }
+
         if (d === 'South' && r === world.nRows - 1) {
           if (world.doors && world.doors.find(door => door.r === world.nRows && door.c === c && door.d === 'North' && door.room.row === room.row && door.room.col === room.col)) {
             return true
@@ -251,7 +220,18 @@ function Karel(context) {
         return !wallAtLocation(r, c, d)
     }
 
-    this.stonesPresent = (color) => !!stonesUnderKarel(color)
+    this.noObstacle = () => {
+      if (context.currentId === 0) {
+        return this.frontIsClear(world.karelRow, world.karelCol, world.karelDir, world.karelRoom)
+      } else if (context.currentId > 0) {
+        const id = context.currentId
+        return stonesAtLocation(world.agents[id].row, world.agents[id].col, world.agents[id].dir, world.agents[id].room)
+      } else {
+        this.error = 'Checked obstacle not for agent!'
+      }
+    }
+
+    this.stonesPresent = (color) => !!stonesUnderAgent(color)
 
     this.random = (a, b) => {
       return Math.floor(Math.random() * (b - a + 1) + a);
@@ -265,12 +245,27 @@ function Karel(context) {
       return world.stones.filter(stone => stone.color === color).reduce((acc, stone) => acc + stone.n, 0);
     }
 
+    this.checkCollision = () => {
+      for (const agentId in world.agents) {
+        if (
+          world.karelRoom.row === world.agents[agentId].room.row &&
+          world.karelRoom.col === world.agents[agentId].room.col &&
+          world.karelRow === world.agents[agentId].row &&
+          world.karelCol === world.agents[agentId].col
+        )
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
     this.error = null
 
     return this
 }
 
-export default function KarelWorld(world, source, highlight) {
+export default function KarelWorld(world, source, highlight, directions) {
     const steps = [copy({
         openBlocks: {},
         world,
@@ -319,10 +314,10 @@ export default function KarelWorld(world, source, highlight) {
 
     //  functions is expected to be an object with keys corresponding to properly named
     //  async function definitions
-    const runner = new Function('karel', 'start_block', 'end_block', 'step', 'done', 'highlight', 'appendText', source)
+    const runner = new Function('karel', 'start_block', 'end_block', 'step', 'done', 'highlight', 'appendText', 'directions', source)
 
     //  start runner, will execute first step so that state is ready for the caller
-    runner(karel, startBlock, endBlock, step, done, highlight, appendText)
+    runner(karel, startBlock, endBlock, step, done, highlight, appendText, directions)
 
     this.step = async (index) => {
         // return previously computed step
@@ -369,27 +364,37 @@ export default function KarelWorld(world, source, highlight) {
 
         steps[index] = currentKarelWorldState
 
-        if ('ArrowLeft' in karel.eventFunctions && !karel.eventFunctions.ArrowLeft.called && karel.leftNextStep) {
-            karel.eventFunctions.ArrowLeft.called = true
-            karel.eventFunctions.ArrowLeft.f()
-        }
-        if ('ArrowRight' in karel.eventFunctions && !karel.eventFunctions.ArrowRight.called && karel.rightNextStep) {
-            karel.eventFunctions.ArrowRight.called = true
-            karel.eventFunctions.ArrowRight.f()
-        }
-        if ('ArrowUp' in karel.eventFunctions && !karel.eventFunctions.ArrowUp.called && karel.upNextStep) {
-            karel.eventFunctions.ArrowUp.called = true
-            karel.eventFunctions.ArrowUp.f()
-        }
-        if ('ArrowDown' in karel.eventFunctions && !karel.eventFunctions.ArrowDown.called && karel.downNextStep) {
-            karel.eventFunctions.ArrowDown.called = true
-            karel.eventFunctions.ArrowDown.f()
+        if (context.currentId === 0) {
+          if ('ArrowLeft' in karel.eventFunctions && !karel.eventFunctions.ArrowLeft.called && directions[1]) {
+              karel.eventFunctions.ArrowLeft.called = true
+              karel.eventFunctions.ArrowLeft.f()
+          }
+          if ('ArrowRight' in karel.eventFunctions && !karel.eventFunctions.ArrowRight.called && directions[3]) {
+              karel.eventFunctions.ArrowRight.called = true
+              karel.eventFunctions.ArrowRight.f()
+          }
+          if ('ArrowUp' in karel.eventFunctions && !karel.eventFunctions.ArrowUp.called && directions[0]) {
+              karel.eventFunctions.ArrowUp.called = true
+              karel.eventFunctions.ArrowUp.f()
+          }
+          if ('ArrowDown' in karel.eventFunctions && !karel.eventFunctions.ArrowDown.called && directions[2]) {
+              karel.eventFunctions.ArrowDown.called = true
+              karel.eventFunctions.ArrowDown.f()
+          }
         }
 
-        karel.leftNextStep = false
-        karel.rightNextStep = false
-        karel.upNextStep = false
-        karel.downNextStep = false
+        if (!('ArrowUp' in karel.eventFunctions)) {
+          directions[0] = false;
+        }
+        if (!('ArrowLeft' in karel.eventFunctions)) {
+          directions[1] = false;
+        }
+        if (!('ArrowDown' in karel.eventFunctions)) {
+          directions[2] = false;
+        }
+        if (!('ArrowRight' in karel.eventFunctions)) {
+          directions[3] = false;
+        }
 
         return currentKarelWorldState
     }

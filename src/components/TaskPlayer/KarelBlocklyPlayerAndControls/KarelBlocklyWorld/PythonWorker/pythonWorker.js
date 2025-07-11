@@ -19,7 +19,7 @@ self.onmessage = async (event) => {
 
   try {
     // Generate the parser code
-    const pythonCode = python.replaceAll('\'', '"');
+    const pythonCode = (python ?? "").replaceAll('\'', '"');
     const parser = parserTemplate.replace('### KAREL_CODE ###', pythonCode);
 
     // Generate JavaScript code

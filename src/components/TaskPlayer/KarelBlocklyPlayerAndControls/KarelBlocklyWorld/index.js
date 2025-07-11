@@ -11,7 +11,7 @@ Blockly.setLocale({ ...en, ...enTranslations })
 initializeKarelBlocks(Blockly)
 initializeKarelBlocklyGenerators(Blockly)
 
-const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython, pythonCode, pythonEndConditions, highlight, agentWorkspaces }) => {
+const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython, pythonCode, pythonEndConditions, highlight, agentWorkspaces, directions }) => {
     if (isPython) {
         if (pythonEndConditions) {
           let endConditions = `try {\n${pythonEndConditions}\n} catch (e) {\nkarel.error = e.message;\n}`;
@@ -22,7 +22,7 @@ const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython
           world.endConditions = new Function('karel', endConditions);
         }
 
-        return new KarelWorld(world, pythonCode, highlight)
+        return new KarelWorld(world, pythonCode, highlight, directions)
     }
 
     // initialize new blockly instance with given workspace and toolbox
@@ -61,7 +61,8 @@ const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython
         if (acc[name]) {
             duplicate = true;
         }
-        acc[name] = `async function ${name}() {\nawait step(0);\n${Blockly.JavaScript.blockToCode(block)}\nkarel.eventFunctions.${name}.called = false;\n}`
+        const id = {'ArrowUp': 0, 'ArrowLeft': 1, 'ArrowDown': 2, 'ArrowRight': 3}[name];
+        acc[name] = `async function ${name}() {\nawait step(0);\n${Blockly.JavaScript.blockToCode(block)}\nkarel.eventFunctions.${name}.called = false;\ndirections[${id}] = false;\n}`
         return acc
     }, {})
 
@@ -94,7 +95,10 @@ const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython
       let agentCode = Blockly.JavaScript.blockToCode(blocklyAgentInstances[key].getBlockById('main'))
       agentCode = agentCode.replace('start_block(\'main\');', '')
       agentCode = agentCode.replace('await step(); end_block(\'main\');', '')
-      functions[`agent_${key}_main`] = `async function agent_${key}_main() {\n${key === Object.keys(blocklyAgentInstances)[0] ? '' : `await step(${key});\n`}try {\nwhile (true) {\n${agentCode}\n}\n} catch (e) {\nkarel.error = e.message;\n}\n}`;
+      if (blocklyAgentInstances[key].getBlockById('main').getChildren().length === 0) {
+        agentCode += 'await step(1)'
+      }
+      functions[`agent_${key}_main`] = `async function agent_${key}_main() {\n${!worldWorkspace && key === Object.keys(blocklyAgentInstances)[0] ? '' : `await step(${key});\n`}try {\nwhile (true) {\n${agentCode}\n}\n} catch (e) {\nkarel.error = e.message;\n}\n}`;
     }
 
     const procedureNames = Blockly.Procedures.allProcedures(blocklyInstance).map(proc => proc.map(([name]) => name)).flat();
@@ -141,7 +145,7 @@ const KarelBlocklyWorld = (world, { toolbox, workspace, worldWorkspace, isPython
     }
     source += '; main().then(done);'
 
-    return new KarelWorld(world, source, isPython)
+    return new KarelWorld(world, source, isPython, directions)
 }
 
 export default KarelBlocklyWorld
